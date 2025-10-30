@@ -4,10 +4,14 @@ Detecção de Fraude com Isolation Forest
 Credit Card Fraud Detection Dataset
 """
 
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from tqdm import tqdm
+from datetime import datetime
+from pathlib import Path
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -26,9 +30,15 @@ sns.set_palette('husl')
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
+# Criar diretório de saída com timestamp
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+OUTPUT_DIR = Path(f"results/{timestamp}")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
 print("="*70)
 print("DETECÇÃO DE FRAUDE COM ISOLATION FOREST")
 print("="*70)
+print(f"\nDiretorio de saida: {OUTPUT_DIR}\n")
 
 # ============================================================================
 # 1. CARREGAMENTO DOS DADOS
@@ -37,21 +47,22 @@ print("\n[1/9] Carregando dados...")
 
 try:
     import kagglehub
-    from kagglehub import KaggleDatasetAdapter
-    
+
     print("  Baixando dataset do Kaggle...")
-    df = kagglehub.load_dataset(
-        KaggleDatasetAdapter.PANDAS,
-        'mlg-ulb/creditcardfraud',
-        '',
-    )
-    print(f"  ✓ Dataset carregado: {df.shape}")
-    
+    # Download do dataset e carregamento
+    path = kagglehub.dataset_download('mlg-ulb/creditcardfraud')
+    print(f"  Dataset baixado para: {path}")
+
+    # Carregar o arquivo CSV do diretório baixado
+    csv_file = os.path.join(path, 'creditcard.csv')
+    df = pd.read_csv(csv_file)
+    print(f"  Dataset carregado: {df.shape}")
+
 except Exception as e:
-    print(f"  ⚠ Erro ao baixar via kagglehub: {e}")
+    print(f"  Erro ao baixar via kagglehub: {e}")
     print("  Tentando carregar arquivo local 'creditcard.csv'...")
     df = pd.read_csv('creditcard.csv')
-    print(f"  ✓ Dataset carregado: {df.shape}")
+    print(f"  Dataset carregado: {df.shape}")
 
 # ============================================================================
 # 2. ANÁLISE EXPLORATÓRIA
@@ -80,8 +91,8 @@ axes[1].pie(class_dist, labels=['Legítima', 'Fraude'],
 axes[1].set_title('Proporção de Classes', fontsize=14, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig('01_distribuicao_classes.png', dpi=150, bbox_inches='tight')
-print("  ✓ Gráfico salvo: 01_distribuicao_classes.png")
+plt.savefig(OUTPUT_DIR / '01_distribuicao_classes.png', dpi=150, bbox_inches='tight')
+print(f"  Grafico salvo: {OUTPUT_DIR}/01_distribuicao_classes.png")
 plt.close()
 
 # ============================================================================
@@ -115,7 +126,7 @@ X_test_scaled[['Time', 'Amount']] = scaler.transform(
     X_test[['Time', 'Amount']]
 )
 
-print("  ✓ Dados normalizados")
+print("  Dados normalizados")
 
 # ============================================================================
 # 4. TREINAMENTO - ISOLATION FOREST
@@ -123,30 +134,37 @@ print("  ✓ Dados normalizados")
 print("\n[4/9] Treinando Isolation Forest...")
 
 contamination_rate = y_train.sum() / len(y_train)
-print(f"  Taxa de contaminação: {contamination_rate:.5f}")
+print(f"  Taxa de contaminacao: {contamination_rate:.5f}")
 
-iso_forest = IsolationForest(
-    n_estimators=100,
-    contamination=contamination_rate,
-    max_samples='auto',
-    random_state=RANDOM_STATE,
-    n_jobs=-1,
-    verbose=0
-)
+with tqdm(total=100, desc="  Progresso", bar_format='{desc}: {percentage:3.0f}%|{bar}| [{elapsed}<{remaining}]') as pbar:
+    iso_forest = IsolationForest(
+        n_estimators=100,
+        contamination=contamination_rate,
+        max_samples='auto',
+        random_state=RANDOM_STATE,
+        n_jobs=-1,
+        verbose=0
+    )
+    pbar.update(20)
 
-iso_forest.fit(X_train_scaled)
-print("  ✓ Modelo treinado")
+    iso_forest.fit(X_train_scaled)
+    pbar.update(40)
 
-# Predições
-y_train_pred = iso_forest.predict(X_train_scaled)
-y_test_pred = iso_forest.predict(X_test_scaled)
-y_train_scores = iso_forest.decision_function(X_train_scaled)
-y_test_scores = iso_forest.decision_function(X_test_scaled)
+    # Predições
+    y_train_pred = iso_forest.predict(X_train_scaled)
+    y_test_pred = iso_forest.predict(X_test_scaled)
+    pbar.update(20)
 
-# Converter: -1 (anomalia) -> 1, 1 (normal) -> 0
-y_train_pred_binary = (y_train_pred == -1).astype(int)
-y_test_pred_binary = (y_test_pred == -1).astype(int)
+    y_train_scores = iso_forest.decision_function(X_train_scaled)
+    y_test_scores = iso_forest.decision_function(X_test_scaled)
+    pbar.update(10)
 
+    # Converter: -1 (anomalia) -> 1, 1 (normal) -> 0
+    y_train_pred_binary = (y_train_pred == -1).astype(int)
+    y_test_pred_binary = (y_test_pred == -1).astype(int)
+    pbar.update(10)
+
+print(f"  Modelo treinado")
 print(f"  Anomalias detectadas (teste): {y_test_pred_binary.sum():,}")
 
 # ============================================================================
@@ -155,22 +173,22 @@ print(f"  Anomalias detectadas (teste): {y_test_pred_binary.sum():,}")
 print("\n[5/9] Avaliando modelo...")
 
 print("\n" + "="*70)
-print("RELATÓRIO DE CLASSIFICAÇÃO - ISOLATION FOREST")
+print("RELATORIO DE CLASSIFICACAO - ISOLATION FOREST")
 print("="*70)
 print(classification_report(
     y_test, y_test_pred_binary,
-    target_names=['Legítima', 'Fraude'], digits=4
+    target_names=['Legitima', 'Fraude'], digits=4
 ))
 
 # Matriz de confusão
 cm = confusion_matrix(y_test, y_test_pred_binary)
 tn, fp, fn, tp = cm.ravel()
 
-print("MATRIZ DE CONFUSÃO")
+print("MATRIZ DE CONFUSAO")
 print(f"  True Negatives:  {tn:,}")
 print(f"  False Positives: {fp:,}")
-print(f"  False Negatives: {fn:,} ⚠️")
-print(f"  True Positives:  {tp:,} ✓")
+print(f"  False Negatives: {fn:,}")
+print(f"  True Positives:  {tp:,}")
 
 # Métricas
 roc_auc = roc_auc_score(y_test, -y_test_scores)
@@ -195,8 +213,8 @@ ax.set_title('Matriz de Confusão - Isolation Forest', fontsize=14, fontweight='
 ax.set_ylabel('Classe Real', fontsize=12)
 ax.set_xlabel('Classe Predita', fontsize=12)
 plt.tight_layout()
-plt.savefig('02_confusion_matrix.png', dpi=150, bbox_inches='tight')
-print("  ✓ Gráfico salvo: 02_confusion_matrix.png")
+plt.savefig(OUTPUT_DIR / '02_confusion_matrix.png', dpi=150, bbox_inches='tight')
+print(f"  Grafico salvo: {OUTPUT_DIR}/02_confusion_matrix.png")
 plt.close()
 
 # ============================================================================
@@ -232,8 +250,8 @@ axes[1].legend(loc='upper right')
 axes[1].grid(alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('03_roc_pr_curves.png', dpi=150, bbox_inches='tight')
-print("  ✓ Gráfico salvo: 03_roc_pr_curves.png")
+plt.savefig(OUTPUT_DIR / '03_roc_pr_curves.png', dpi=150, bbox_inches='tight')
+print(f"  Grafico salvo: {OUTPUT_DIR}/03_roc_pr_curves.png")
 plt.close()
 
 print(f"  Ganho sobre baseline: {(ap_score/baseline - 1)*100:.1f}%")
@@ -245,22 +263,30 @@ print("\n[7/9] Treinando modelos baseline...")
 
 # Random Forest
 print("  Treinando Random Forest...")
-rf = RandomForestClassifier(
-    n_estimators=100, class_weight='balanced',
-    random_state=RANDOM_STATE, n_jobs=-1, verbose=0
-)
-rf.fit(X_train_scaled, y_train)
-y_pred_rf = rf.predict(X_test_scaled)
-y_proba_rf = rf.predict_proba(X_test_scaled)[:, 1]
+with tqdm(total=100, desc="    Progresso", bar_format='{desc}: {percentage:3.0f}%|{bar}| [{elapsed}]') as pbar:
+    rf = RandomForestClassifier(
+        n_estimators=100, class_weight='balanced',
+        random_state=RANDOM_STATE, n_jobs=-1, verbose=0
+    )
+    pbar.update(30)
+    rf.fit(X_train_scaled, y_train)
+    pbar.update(50)
+    y_pred_rf = rf.predict(X_test_scaled)
+    y_proba_rf = rf.predict_proba(X_test_scaled)[:, 1]
+    pbar.update(20)
 
 # Logistic Regression
 print("  Treinando Logistic Regression...")
-lr = LogisticRegression(
-    class_weight='balanced', random_state=RANDOM_STATE, max_iter=1000, verbose=0
-)
-lr.fit(X_train_scaled, y_train)
-y_pred_lr = lr.predict(X_test_scaled)
-y_proba_lr = lr.predict_proba(X_test_scaled)[:, 1]
+with tqdm(total=100, desc="    Progresso", bar_format='{desc}: {percentage:3.0f}%|{bar}| [{elapsed}]') as pbar:
+    lr = LogisticRegression(
+        class_weight='balanced', random_state=RANDOM_STATE, max_iter=1000, verbose=0
+    )
+    pbar.update(30)
+    lr.fit(X_train_scaled, y_train)
+    pbar.update(50)
+    y_pred_lr = lr.predict(X_test_scaled)
+    y_proba_lr = lr.predict_proba(X_test_scaled)[:, 1]
+    pbar.update(20)
 
 # Comparação
 comparison = pd.DataFrame({
@@ -314,8 +340,8 @@ ax.legend()
 ax.grid(alpha=0.3, axis='y')
 ax.set_ylim([0, 1])
 plt.tight_layout()
-plt.savefig('04_model_comparison.png', dpi=150, bbox_inches='tight')
-print("  ✓ Gráfico salvo: 04_model_comparison.png")
+plt.savefig(OUTPUT_DIR / '04_model_comparison.png', dpi=150, bbox_inches='tight')
+print(f"  Grafico salvo: {OUTPUT_DIR}/04_model_comparison.png")
 plt.close()
 
 # ============================================================================
@@ -346,8 +372,8 @@ print(f"  False Negatives: {fn_count:,} (fraudes não detectadas)")
 print("\n[9/9] Salvando resultados...")
 
 # Salvar comparação em CSV
-comparison.to_csv('comparison_results.csv', index=False)
-print("  ✓ Resultados salvos: comparison_results.csv")
+comparison.to_csv(OUTPUT_DIR / 'comparison_results.csv', index=False)
+print(f"  Resultados salvos: {OUTPUT_DIR}/comparison_results.csv")
 
 # Salvar métricas principais
 metrics_summary = {
@@ -364,6 +390,19 @@ metrics_summary = {
 }
 
 metrics_df = pd.DataFrame([metrics_summary])
-metrics_df.to_csv('isolation_forest_metrics.csv', index=False)
-print("  ✓ Métricas salvas: isolation_forest_metrics.csv")
+metrics_df.to_csv(OUTPUT_DIR / 'isolation_forest_metrics.csv', index=False)
+print(f"  Metricas salvas: {OUTPUT_DIR}/isolation_forest_metrics.csv")
+
+print("\n" + "="*70)
+print("EXECUCAO CONCLUIDA")
+print("="*70)
+print(f"\nTodos os resultados foram salvos em: {OUTPUT_DIR}/")
+print("\nArquivos gerados:")
+print("  - comparison_results.csv")
+print("  - isolation_forest_metrics.csv")
+print("  - 01_distribuicao_classes.png")
+print("  - 02_confusion_matrix.png")
+print("  - 03_roc_pr_curves.png")
+print("  - 04_model_comparison.png")
+print("\n" + "="*70)
 
