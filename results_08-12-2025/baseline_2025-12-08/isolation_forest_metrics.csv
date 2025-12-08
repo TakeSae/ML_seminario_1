@@ -1,2 +1,0 @@
-Modelo,ROC-AUC,PR-AUC,F1-Score,Precision,Recall,True Positives,False Positives,False Negatives,True Negatives
-Isolation Forest,0.9543364475784686,0.21797227754191925,0.32195121951219513,0.308411214953271,0.336734693877551,33,74,65,56790

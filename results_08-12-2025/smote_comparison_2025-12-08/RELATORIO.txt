@@ -5,7 +5,7 @@ RELATÓRIO: COMPARAÇÃO DATASET ORIGINAL vs SMOTE
 CONFIGURAÇÃO SMOTE:
   - Estratégia: 0.5 (50% de fraudes)
   - K-neighbors: 5
-  - Tempo de execução: 0.13s
+  - Tempo de execução: 0.10s
 
 DATASET ORIGINAL (TREINO):
   - Total: 227,845
@@ -24,14 +24,14 @@ RESULTADOS COMPLETOS
 ================================================================================
 
              Modelo  Dataset  F1-Score  Precision   Recall  ROC-AUC   PR-AUC  Tempo (s)
-      Random Forest Original  0.815920   0.796117 0.836735 0.978590 0.842157   9.878787
-      Random Forest    SMOTE  0.710204   0.591837 0.887755 0.981942 0.834869  17.019145
-            XGBoost Original  0.697095   0.587413 0.857143 0.976357 0.850287   0.859762
-            XGBoost    SMOTE  0.639706   0.500000 0.887755 0.977914 0.862591   0.710691
-Logistic Regression Original  0.100503   0.053160 0.918367 0.972334 0.738895  14.115862
-Logistic Regression    SMOTE  0.309609   0.187500 0.887755 0.975142 0.782710  19.257118
-  Gradient Boosting Original  0.175716   0.097268 0.908163 0.974118 0.748063  17.641101
-  Gradient Boosting    SMOTE  0.344423   0.213075 0.897959 0.979484 0.737348  30.447433
+      Random Forest Original  0.815920   0.796117 0.836735 0.978590 0.842157   9.646057
+      Random Forest    SMOTE  0.710204   0.591837 0.887755 0.981942 0.834869  16.418649
+            XGBoost Original  0.697095   0.587413 0.857143 0.976357 0.850287   0.739810
+            XGBoost    SMOTE  0.639706   0.500000 0.887755 0.977914 0.862591   1.477484
+Logistic Regression Original  0.100503   0.053160 0.918367 0.972334 0.738895  14.091956
+Logistic Regression    SMOTE  0.309609   0.187500 0.887755 0.975142 0.782710  17.500049
+  Gradient Boosting Original  0.175716   0.097268 0.908163 0.974118 0.748063  17.600832
+  Gradient Boosting    SMOTE  0.344423   0.213075 0.897959 0.979484 0.737348  27.062513
 
 ================================================================================
 MELHORIAS COM SMOTE (%)

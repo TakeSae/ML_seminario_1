@@ -463,6 +463,49 @@ plt.tight_layout()
 plt.savefig(results_dir / '04_class_distribution.png', dpi=300, bbox_inches='tight')
 plt.close()
 
+# ========== Gráfico 5: Matrizes de Confusão ==========
+fig, axes = plt.subplots(4, 2, figsize=(12, 16))
+fig.suptitle('Matrizes de Confusão: Original vs SMOTE', fontsize=16, fontweight='bold')
+
+for idx, model_name in enumerate(models_list):
+    # Matrizes de confusão Original
+    ax_original = axes[idx, 0]
+    model_original = models[model_name]['original']
+    y_pred_original = model_original.predict(X_test)
+    cm_original = confusion_matrix(y_test, y_pred_original)
+
+    sns.heatmap(cm_original, annot=True, fmt='d', cmap='Blues', ax=ax_original,
+                xticklabels=['Legítima', 'Fraude'],
+                yticklabels=['Legítima', 'Fraude'],
+                cbar=False)
+
+    f1_orig = results_df[(results_df['Modelo'] == model_name) & (results_df['Dataset'] == 'Original')]['F1-Score'].values[0]
+    ax_original.set_title(f'{model_name} - Original\nF1={f1_orig:.3f}', fontweight='bold', fontsize=10)
+    ax_original.set_xlabel('Classe Predita', fontweight='bold', fontsize=9)
+    ax_original.set_ylabel('Classe Real', fontweight='bold', fontsize=9)
+
+    # Matrizes de confusão SMOTE
+    ax_smote = axes[idx, 1]
+    model_smote = models[model_name]['smote']
+    y_pred_smote = model_smote.predict(X_test)
+    cm_smote = confusion_matrix(y_test, y_pred_smote)
+
+    sns.heatmap(cm_smote, annot=True, fmt='d', cmap='Oranges', ax=ax_smote,
+                xticklabels=['Legítima', 'Fraude'],
+                yticklabels=['Legítima', 'Fraude'],
+                cbar=False)
+
+    f1_smote = results_df[(results_df['Modelo'] == model_name) & (results_df['Dataset'] == 'SMOTE')]['F1-Score'].values[0]
+    improvement = ((f1_smote - f1_orig) / f1_orig * 100) if f1_orig > 0 else 0
+    ax_smote.set_title(f'{model_name} - SMOTE\nF1={f1_smote:.3f} ({improvement:+.1f}%)',
+                       fontweight='bold', fontsize=10)
+    ax_smote.set_xlabel('Classe Predita', fontweight='bold', fontsize=9)
+    ax_smote.set_ylabel('Classe Real', fontweight='bold', fontsize=9)
+
+plt.tight_layout()
+plt.savefig(results_dir / '05_confusion_matrices.png', dpi=300, bbox_inches='tight')
+plt.close()
+
 print(f"✓ Visualizações salvas em: {results_dir}")
 print()
 

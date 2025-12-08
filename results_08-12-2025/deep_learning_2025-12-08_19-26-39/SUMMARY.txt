@@ -1,0 +1,52 @@
+================================================================================
+RELATÓRIO - DETECÇÃO DE FRAUDE COM DEEP LEARNING
+================================================================================
+
+Data de execução: 2025-12-08_19-26-39
+Dataset: Credit Card Fraud Detection (Kaggle)
+Total de transações: 284,807
+  - Legítimas: 284,315 (99.827%)
+  - Fraudes: 492 (0.173%)
+Conjunto de teste: 56,962 transações
+
+MODELOS DEEP LEARNING AVALIADOS
+--------------------------------------------------------------------------------
+1. Autoencoder (Não Supervisionado)
+   - Arquitetura: [30, 20, 14, 10, 7] -> [10, 14, 20, 30]
+   - Detecção baseada em erro de reconstrução
+
+2. MLP Deep (Supervisionado)
+   - Arquitetura: [128, 64, 32, 16, 1]
+   - BatchNormalization + Dropout
+
+3. MLP Wide (Supervisionado)
+   - Arquitetura: [256, 128, 64, 1]
+   - BatchNormalization + Dropout
+
+================================================================================
+RESULTADOS COMPARATIVOS
+================================================================================
+
+     Modelo               Tipo  F1-Score  Precision   Recall  ROC-AUC   PR-AUC
+   MLP Wide     Supervisionado  0.546032   0.396313 0.877551 0.966004 0.710945
+   MLP Deep     Supervisionado  0.120465   0.064563 0.897959 0.976193 0.720203
+Autoencoder Não Supervisionado  0.054422   0.028103 0.857143 0.958452 0.189999
+
+================================================================================
+MELHOR MODELO POR MÉTRICA
+================================================================================
+
+F1-Score            : MLP Wide                  (0.5460)
+Precision           : MLP Wide                  (0.3963)
+Recall              : MLP Deep                  (0.8980)
+ROC-AUC             : MLP Deep                  (0.9762)
+PR-AUC              : MLP Deep                  (0.7202)
+
+================================================================================
+OBSERVAÇÕES
+================================================================================
+
+- Autoencoder: treinado apenas com transações normais
+- MLP: treinados com class weights para balancear classes
+- Early Stopping aplicado para evitar overfitting
+- ReduceLROnPlateau para ajuste adaptativo da taxa de aprendizado
