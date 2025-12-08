@@ -108,6 +108,146 @@ Este projeto implementou e comparou **8 modelos diferentes** para detecção de 
 
 ---
 
+## Análise de Balanceamento Sintético (SMOTE)
+
+**Data da execução:** 08/12/2025
+**Fonte:** Script `fraud_detection_smote_comparison.py`
+
+### Objetivo
+
+Avaliar se o uso de SMOTE (Synthetic Minority Over-sampling Technique) para balanceamento sintético de dados melhora a performance dos modelos em comparação com o uso de class weighting no dataset original.
+
+### Configuração SMOTE
+
+- **Estratégia:** sampling_strategy=0.5 (50% de fraudes, ratio 2:1)
+- **K-neighbors:** 5
+- **Tempo de execução:** 0.13s
+
+### Transformação do Dataset
+
+**Dataset Original (Treino):**
+- Total: 227,845 amostras
+- Fraudes: 394 (0.17%)
+- Legítimas: 227,451 (99.83%)
+- Ratio: 577.3:1
+
+**Dataset SMOTE (Treino):**
+- Total: 341,176 amostras (+49.7%)
+- Fraudes: 113,725 (33.3%)
+- Legítimas: 227,451 (66.7%)
+- Ratio: 2.0:1
+- Fraudes sintéticas geradas: 113,331
+
+### Resultados Comparativos
+
+| Modelo | Dataset | F1-Score | Precision | Recall | ROC-AUC | PR-AUC | Tempo (s) |
+|--------|---------|----------|-----------|--------|---------|--------|-----------|
+| Random Forest | Original | 0.816 | 0.796 | 0.837 | 0.979 | 0.842 | 9.9 |
+| Random Forest | SMOTE | 0.710 | 0.592 | 0.888 | 0.982 | 0.835 | 17.0 |
+| XGBoost | Original | 0.697 | 0.587 | 0.857 | 0.976 | 0.850 | 0.9 |
+| XGBoost | SMOTE | 0.640 | 0.500 | 0.888 | 0.978 | 0.863 | 0.7 |
+| Logistic Regression | Original | 0.101 | 0.053 | 0.918 | 0.972 | 0.739 | 14.1 |
+| Logistic Regression | SMOTE | 0.310 | 0.188 | 0.888 | 0.975 | 0.783 | 19.3 |
+| Gradient Boosting | Original | 0.176 | 0.097 | 0.908 | 0.974 | 0.748 | 17.6 |
+| Gradient Boosting | SMOTE | 0.344 | 0.213 | 0.898 | 0.979 | 0.737 | 30.4 |
+
+### Variação Percentual com SMOTE
+
+| Modelo | F1-Score Δ% | Precision Δ% | Recall Δ% | ROC-AUC Δ% | PR-AUC Δ% |
+|--------|-------------|--------------|-----------|------------|-----------|
+| Random Forest | -13.0% | -25.7% | +6.1% | +0.3% | -0.9% |
+| XGBoost | -8.2% | -14.9% | +3.6% | +0.2% | +1.4% |
+| Logistic Regression | +208.1% | +252.7% | -3.3% | +0.3% | +5.9% |
+| Gradient Boosting | +96.0% | +119.1% | -1.1% | +0.6% | -1.4% |
+
+### Análise dos Resultados
+
+#### Modelos que Melhoraram com SMOTE
+
+**Logistic Regression:**
+- Melhoria de 208.1% no F1-Score (0.101 → 0.310)
+- Precision aumentou 252.7% (0.053 → 0.188)
+- Modelo linear simples se beneficiou dos exemplos sintéticos adicionais
+- Passou de F1=0.101 (praticamente inútil) para F1=0.310 (utilizável)
+
+**Gradient Boosting:**
+- Melhoria de 96.0% no F1-Score (0.176 → 0.344)
+- Precision aumentou 119.1% (0.097 → 0.213)
+- Modelo que apresentava problemas de overflow no dataset original melhorou significativamente
+- Dataset balanceado reduziu problemas de convergência
+
+#### Modelos que Pioraram com SMOTE
+
+**Random Forest:**
+- Degradação de 13.0% no F1-Score (0.816 → 0.710)
+- Precision caiu 25.7% (0.796 → 0.592)
+- Recall aumentou 6.1% (0.837 → 0.888)
+- Trade-off negativo: ganho pequeno em recall não compensa perda grande em precision
+
+**XGBoost:**
+- Degradação de 8.2% no F1-Score (0.697 → 0.640)
+- Precision caiu 14.9% (0.587 → 0.500)
+- Recall aumentou 3.6% (0.857 → 0.888)
+- Trade-off negativo similar ao Random Forest
+
+### Explicação dos Resultados
+
+#### Por que modelos fortes pioraram?
+
+**1. Class Weight já era eficiente:**
+- Random Forest e XGBoost com `class_weight='balanced'` já compensavam o desbalanceamento
+- Peso automático (577.3x para fraudes) era mais eficiente que dados sintéticos
+
+**2. Qualidade dos dados sintéticos:**
+- SMOTE gera dados por interpolação entre vizinhos
+- Dados sintéticos são aproximações, não observações reais
+- Modelos fortes aprenderam padrões dos dados sintéticos que não generalizaram bem para dados reais no teste
+
+**3. Overfitting em dados sintéticos:**
+- Com 113,331 fraudes sintéticas vs 394 reais (287x mais sintéticas)
+- Modelos aprenderam características dos dados gerados, não dos padrões reais de fraude
+- No conjunto de teste (dados 100% reais), precision caiu drasticamente
+
+#### Por que modelos fracos melhoraram?
+
+**1. Necessidade de mais exemplos:**
+- Logistic Regression e Gradient Boosting não têm `class_weight` tão eficiente
+- 394 fraudes eram insuficientes para aprender padrões complexos
+- SMOTE forneceu volume necessário de exemplos
+
+**2. Simplificação do problema:**
+- Dataset balanceado (2:1) é mais fácil de treinar que desbalanceado (577:1)
+- Modelos simples se beneficiam de problemas simplificados
+- Convergência mais estável com classes equilibradas
+
+### Conclusões sobre SMOTE
+
+#### Quando NÃO usar SMOTE neste problema:
+
+1. **Random Forest e XGBoost:** Piora de 8-13% no F1-Score
+2. **Modelos com class_weight eficiente:** Mecanismo nativo é superior
+3. **Dataset com centenas de exemplos reais:** 394 fraudes são suficientes para modelos fortes
+4. **Quando precision é crítica:** SMOTE reduziu precision em 15-26% nos melhores modelos
+
+#### Quando SMOTE pode ser útil:
+
+1. **Modelos sem class_weight:** Logistic Regression (+208%), Gradient Boosting (+96%)
+2. **Datasets muito pequenos:** < 100 exemplos da classe minoritária
+3. **Deep Learning puro:** Redes neurais sem mecanismos de balanceamento
+4. **Quando recall é crítico:** SMOTE aumentou recall em todos os modelos
+
+### Recomendação Final sobre Balanceamento
+
+**Para este dataset (577:1 desbalanceamento, 394 fraudes):**
+
+1. **Usar:** `class_weight='balanced'` em Random Forest e XGBoost
+2. **Não usar:** SMOTE para modelos baseados em árvores
+3. **Considerar SMOTE:** Apenas para Logistic Regression e Gradient Boosting se forem os modelos escolhidos
+
+**Melhor abordagem:** Random Forest com class_weight='balanced' (F1=0.816) supera Random Forest com SMOTE (F1=0.710) em 14.9%
+
+---
+
 ## Conclusão
 
 **Modelo Recomendado:** Random Forest
@@ -120,3 +260,5 @@ Este projeto implementou e comparou **8 modelos diferentes** para detecção de 
 **Melhoria sobre baseline:** +155% em F1-Score (0.322 → 0.822)
 
 **Proximidade ao estado da arte:** 94-99.7% dos melhores resultados publicados
+
+**Balanceamento recomendado:** Class weighting nativo ao invés de SMOTE

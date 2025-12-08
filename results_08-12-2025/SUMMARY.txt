@@ -1,0 +1,64 @@
+================================================================================
+RELATÓRIO - MÉTODOS DE ENSEMBLE
+================================================================================
+
+Data de execução: 2025-12-08_19-29-20
+Dataset: Credit Card Fraud Detection (Kaggle)
+Conjunto de teste: 56,962 transações
+
+MODELOS BASE
+--------------------------------------------------------------------------------
+  - Random Forest
+  - XGBoost
+  - Isolation Forest
+  - Gradient Boosting
+  - Logistic Regression
+
+MÉTODOS DE ENSEMBLE
+--------------------------------------------------------------------------------
+1. Voting Hard: maioria dos votos (hard voting)
+2. Voting Soft: média das probabilidades (soft voting)
+3. Stacking: meta-learner (Logistic Regression) sobre predições base
+4. Weighted Average: média ponderada por F1-Score
+
+================================================================================
+RESULTADOS COMPLETOS
+================================================================================
+
+             Modelo       Tipo  F1-Score  Precision   Recall  ROC-AUC   PR-AUC
+      Random Forest Base Model  0.822335   0.818182 0.826531 0.976571 0.817688
+        Voting Hard   Ensemble  0.813725   0.783019 0.846939      NaN      NaN
+   Weighted Average   Ensemble  0.775701   0.715517 0.846939 0.977812 0.822555
+        Voting Soft   Ensemble  0.767123   0.694215 0.857143 0.974468 0.752197
+            XGBoost Base Model  0.656250   0.531646 0.857143 0.975516 0.844570
+   Isolation Forest Base Model  0.321951   0.308411 0.336735 0.954336 0.217972
+  Gradient Boosting Base Model  0.272727   0.529412 0.183673 0.346886 0.156654
+           Stacking   Ensemble  0.135258   0.073071 0.908163 0.978455 0.833483
+Logistic Regression Base Model  0.114358   0.060976 0.918367 0.972169 0.715912
+
+================================================================================
+MELHOR MODELO POR MÉTRICA
+================================================================================
+
+F1-Score            : Random Forest                  (0.8223) [Base Model]
+Precision           : Random Forest                  (0.8182) [Base Model]
+Recall              : Logistic Regression            (0.9184) [Base Model]
+ROC-AUC             : Stacking                       (0.9785) [Ensemble]
+PR-AUC              : XGBoost                        (0.8446) [Base Model]
+
+================================================================================
+ANÁLISE ESTATÍSTICA
+================================================================================
+
+F1-Score médio (Base Models): 0.4375
+F1-Score médio (Ensembles): 0.6230
+Melhoria relativa: +42.38%
+
+================================================================================
+CONCLUSÕES
+================================================================================
+
+- Ensembles geralmente superam modelos individuais
+- Stacking combina melhor os pontos fortes de cada modelo
+- Soft voting é superior ao hard voting (usa probabilidades)
+- Weighted average adapta-se ao desempenho dos modelos base

@@ -13,9 +13,7 @@ ENV/
 
 # Results and outputs
 results/
-*.csv
-*.png
-*.keras
+
 *.h5
 *.pkl
 

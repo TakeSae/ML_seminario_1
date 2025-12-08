@@ -1,0 +1,70 @@
+================================================================================
+RELATÓRIO: COMPARAÇÃO DATASET ORIGINAL vs SMOTE
+================================================================================
+
+CONFIGURAÇÃO SMOTE:
+  - Estratégia: 0.5 (50% de fraudes)
+  - K-neighbors: 5
+  - Tempo de execução: 0.13s
+
+DATASET ORIGINAL (TREINO):
+  - Total: 227,845
+  - Fraudes: 394
+  - Legítimas: 227,451
+  - Ratio: 577.3:1
+
+DATASET SMOTE (TREINO):
+  - Total: 341,176
+  - Fraudes: 113,725
+  - Legítimas: 227,451
+  - Ratio: 2.0:1
+
+================================================================================
+RESULTADOS COMPLETOS
+================================================================================
+
+             Modelo  Dataset  F1-Score  Precision   Recall  ROC-AUC   PR-AUC  Tempo (s)
+      Random Forest Original  0.815920   0.796117 0.836735 0.978590 0.842157   9.878787
+      Random Forest    SMOTE  0.710204   0.591837 0.887755 0.981942 0.834869  17.019145
+            XGBoost Original  0.697095   0.587413 0.857143 0.976357 0.850287   0.859762
+            XGBoost    SMOTE  0.639706   0.500000 0.887755 0.977914 0.862591   0.710691
+Logistic Regression Original  0.100503   0.053160 0.918367 0.972334 0.738895  14.115862
+Logistic Regression    SMOTE  0.309609   0.187500 0.887755 0.975142 0.782710  19.257118
+  Gradient Boosting Original  0.175716   0.097268 0.908163 0.974118 0.748063  17.641101
+  Gradient Boosting    SMOTE  0.344423   0.213075 0.897959 0.979484 0.737348  30.447433
+
+================================================================================
+MELHORIAS COM SMOTE (%)
+================================================================================
+
+                     F1-Score Δ%  Precision Δ%  Recall Δ%  ROC-AUC Δ%  PR-AUC Δ%
+Modelo                                                                          
+Gradient Boosting      96.011346    119.060315  -1.123596    0.550950  -1.432234
+Logistic Regression   208.060498    252.708333  -3.333333    0.288853   5.929711
+Random Forest         -12.956695    -25.659532   6.097561    0.342550  -0.865312
+XGBoost                -8.232668    -14.880952   3.571429    0.159422   1.447113
+
+================================================================================
+RESUMO
+================================================================================
+
+Random Forest:
+  Original: F1=0.816
+  SMOTE:    F1=0.710
+  Melhoria: -13.0%
+
+XGBoost:
+  Original: F1=0.697
+  SMOTE:    F1=0.640
+  Melhoria: -8.2%
+
+Logistic Regression:
+  Original: F1=0.101
+  SMOTE:    F1=0.310
+  Melhoria: +208.1%
+
+Gradient Boosting:
+  Original: F1=0.176
+  SMOTE:    F1=0.344
+  Melhoria: +96.0%
+
