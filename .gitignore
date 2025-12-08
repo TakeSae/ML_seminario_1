@@ -4,76 +4,47 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-docs/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual Environment
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*.ipynb
-
-# Data files
-*.csv
-*.xlsx
-*.xls
-*.json
-*.parquet
-
-# Model files
-*.pkl
-*.pickle
-*.h5
-*.joblib
 
 # Results and outputs
 results/
-outputs/
-logs/
+*.csv
 *.png
-*.jpg
-*.jpeg
-*.pdf
-*.svg
+*.keras
+*.h5
+*.pkl
+
+# Logs
+*.log
+*.out
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
+*.code-workspace
+
+# Temporary files
+*.tmp
 *~
-.DS_Store
 
-# Kaggle
-.kaggle/
-kaggle.json
+# Backup files
+*_BACKUP.md
+*_OLD.md
+*_old.*
+*_backup.*
 
-# Cache
-.cache/
-__pycache__/
+# Technical documentation (personal notes)
+DOCUMENTACAO_TECNICA_IMPLEMENTACAO.md
 
-# OS
-Thumbs.db
-.DS_Store
+**/docs

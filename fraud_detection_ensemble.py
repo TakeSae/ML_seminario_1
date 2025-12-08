@@ -130,11 +130,12 @@ base_probas = {}
 # 4.1 Random Forest
 print("\n  [4.1] Random Forest...")
 rf = RandomForestClassifier(
-    n_estimators=200,
-    max_depth=20,
+    n_estimators=100,
+    max_depth=10,
     class_weight='balanced',
     random_state=RANDOM_STATE,
-    n_jobs=-1
+    n_jobs=-1,
+    verbose=1
 )
 rf.fit(X_train_scaled, y_train)
 base_models['Random Forest'] = rf
@@ -159,10 +160,11 @@ print(f"    Treinado | F1: {f1_score(y_test, base_predictions['Logistic Regressi
 # 4.3 Gradient Boosting
 print("\n  [4.3] Gradient Boosting...")
 gb = GradientBoostingClassifier(
-    n_estimators=100,
+    n_estimators=50,
     learning_rate=0.1,
-    max_depth=5,
-    random_state=RANDOM_STATE
+    max_depth=3,
+    random_state=RANDOM_STATE,
+    verbose=1
 )
 gb.fit(X_train_scaled, y_train)
 base_models['Gradient Boosting'] = gb
@@ -175,13 +177,14 @@ if XGBOOST_AVAILABLE:
     print("\n  [4.4] XGBoost...")
     scale_pos_weight = (len(y_train) - y_train.sum()) / y_train.sum()
     xgb = XGBClassifier(
-        n_estimators=200,
-        max_depth=7,
+        n_estimators=100,
+        max_depth=5,
         learning_rate=0.1,
         scale_pos_weight=scale_pos_weight,
         random_state=RANDOM_STATE,
         tree_method='hist',
-        n_jobs=-1
+        n_jobs=-1,
+        verbosity=0
     )
     xgb.fit(X_train_scaled, y_train)
     base_models['XGBoost'] = xgb
@@ -213,19 +216,19 @@ print("\n[5/9] Criando Voting Classifier (Hard Voting)...")
 
 # Usar apenas modelos supervisionados para hard voting
 voting_estimators = [
-    ('rf', RandomForestClassifier(n_estimators=200, max_depth=20, class_weight='balanced',
+    ('rf', RandomForestClassifier(n_estimators=100, max_depth=10, class_weight='balanced',
                                    random_state=RANDOM_STATE, n_jobs=-1)),
     ('lr', LogisticRegression(class_weight='balanced', C=1.0, max_iter=1000,
                               random_state=RANDOM_STATE)),
-    ('gb', GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=5,
+    ('gb', GradientBoostingClassifier(n_estimators=50, learning_rate=0.1, max_depth=3,
                                       random_state=RANDOM_STATE))
 ]
 
 if XGBOOST_AVAILABLE:
     voting_estimators.append(
-        ('xgb', XGBClassifier(n_estimators=200, max_depth=7, learning_rate=0.1,
+        ('xgb', XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.1,
                              scale_pos_weight=scale_pos_weight, random_state=RANDOM_STATE,
-                             tree_method='hist', n_jobs=-1))
+                             tree_method='hist', n_jobs=-1, verbosity=0))
     )
 
 print(f"  Modelos no ensemble: {len(voting_estimators)}")
@@ -255,17 +258,17 @@ print("\n[7/9] Criando Stacking Classifier...")
 
 # Base estimators
 stacking_estimators = [
-    ('rf', RandomForestClassifier(n_estimators=200, max_depth=20, class_weight='balanced',
+    ('rf', RandomForestClassifier(n_estimators=100, max_depth=10, class_weight='balanced',
                                   random_state=RANDOM_STATE, n_jobs=-1)),
-    ('gb', GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=5,
+    ('gb', GradientBoostingClassifier(n_estimators=50, learning_rate=0.1, max_depth=3,
                                       random_state=RANDOM_STATE))
 ]
 
 if XGBOOST_AVAILABLE:
     stacking_estimators.append(
-        ('xgb', XGBClassifier(n_estimators=200, max_depth=7, learning_rate=0.1,
+        ('xgb', XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.1,
                              scale_pos_weight=scale_pos_weight, random_state=RANDOM_STATE,
-                             tree_method='hist', n_jobs=-1))
+                             tree_method='hist', n_jobs=-1, verbosity=0))
     )
 
 # Meta-learner
