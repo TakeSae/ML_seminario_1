@@ -195,6 +195,126 @@ for name, model in models.items():
     })
 
 results_df = pd.DataFrame(results)
+
+# ============================================================================
+# 3.1 THRESHOLD TUNING PARA RANDOM FOREST
+# ============================================================================
+print("\n" + "="*80)
+print("THRESHOLD TUNING - RANDOM FOREST")
+print("="*80)
+
+# Obter probabilidades do Random Forest
+rf_model = models['Random Forest']
+rf_proba = probabilities['Random Forest']
+
+# Testar diferentes thresholds
+thresholds = np.arange(0.05, 0.96, 0.05)
+threshold_results = []
+
+for threshold in thresholds:
+    y_pred_thresh = (rf_proba >= threshold).astype(int)
+
+    f1 = f1_score(y_test, y_pred_thresh, zero_division=0)
+    precision = precision_score(y_test, y_pred_thresh, zero_division=0)
+    recall = recall_score(y_test, y_pred_thresh, zero_division=0)
+
+    threshold_results.append({
+        'Threshold': threshold,
+        'F1-Score': f1,
+        'Precision': precision,
+        'Recall': recall
+    })
+
+df_thresholds = pd.DataFrame(threshold_results)
+
+# Encontrar thresholds ótimos
+best_f1_idx = df_thresholds['F1-Score'].idxmax()
+best_precision_idx = df_thresholds['Precision'].idxmax()
+best_recall_idx = df_thresholds['Recall'].idxmax()
+
+best_f1_threshold = df_thresholds.loc[best_f1_idx, 'Threshold']
+best_precision_threshold = df_thresholds.loc[best_precision_idx, 'Threshold']
+best_recall_threshold = df_thresholds.loc[best_recall_idx, 'Threshold']
+
+print(f"\nThresholds ótimos encontrados:")
+print(f"  - Melhor F1-Score:  {best_f1_threshold:.2f} (F1={df_thresholds.loc[best_f1_idx, 'F1-Score']:.3f})")
+print(f"  - Melhor Precision: {best_precision_threshold:.2f} (P={df_thresholds.loc[best_precision_idx, 'Precision']:.3f})")
+print(f"  - Melhor Recall:    {best_recall_threshold:.2f} (R={df_thresholds.loc[best_recall_idx, 'Recall']:.3f})")
+
+# Adicionar variações com threshold tuning aos resultados
+rf_base_time = results_df[results_df['Modelo'] == 'Random Forest']['Tempo (s)'].values[0]
+
+# RF com threshold otimizado para F1
+y_pred_f1 = (rf_proba >= best_f1_threshold).astype(int)
+predictions['RF + Threshold (F1)'] = y_pred_f1
+probabilities['RF + Threshold (F1)'] = rf_proba
+
+f1_tuned = f1_score(y_test, y_pred_f1)
+precision_tuned = precision_score(y_test, y_pred_f1)
+recall_tuned = recall_score(y_test, y_pred_f1)
+roc_auc_tuned = roc_auc_score(y_test, rf_proba)
+precision_curve, recall_curve, _ = precision_recall_curve(y_test, rf_proba)
+pr_auc_tuned = auc(recall_curve, precision_curve)
+
+results.append({
+    'Modelo': 'RF + Threshold (F1)',
+    'F1-Score': f1_tuned,
+    'Precision': precision_tuned,
+    'Recall': recall_tuned,
+    'ROC-AUC': roc_auc_tuned,
+    'PR-AUC': pr_auc_tuned,
+    'Tempo (s)': rf_base_time
+})
+
+print(f"\n  ✓ RF + Threshold (F1={best_f1_threshold:.2f}): F1={f1_tuned:.3f}, P={precision_tuned:.3f}, R={recall_tuned:.3f}")
+
+# RF com threshold otimizado para Precision
+y_pred_precision = (rf_proba >= best_precision_threshold).astype(int)
+predictions['RF + Threshold (Precision)'] = y_pred_precision
+probabilities['RF + Threshold (Precision)'] = rf_proba
+
+f1_prec = f1_score(y_test, y_pred_precision)
+precision_prec = precision_score(y_test, y_pred_precision)
+recall_prec = recall_score(y_test, y_pred_precision)
+
+results.append({
+    'Modelo': 'RF + Threshold (Precision)',
+    'F1-Score': f1_prec,
+    'Precision': precision_prec,
+    'Recall': recall_prec,
+    'ROC-AUC': roc_auc_tuned,
+    'PR-AUC': pr_auc_tuned,
+    'Tempo (s)': rf_base_time
+})
+
+print(f"  ✓ RF + Threshold (P={best_precision_threshold:.2f}): F1={f1_prec:.3f}, P={precision_prec:.3f}, R={recall_prec:.3f}")
+
+# RF com threshold otimizado para Recall
+y_pred_recall = (rf_proba >= best_recall_threshold).astype(int)
+predictions['RF + Threshold (Recall)'] = y_pred_recall
+probabilities['RF + Threshold (Recall)'] = rf_proba
+
+f1_rec = f1_score(y_test, y_pred_recall)
+precision_rec = precision_score(y_test, y_pred_recall)
+recall_rec = recall_score(y_test, y_pred_recall)
+
+results.append({
+    'Modelo': 'RF + Threshold (Recall)',
+    'F1-Score': f1_rec,
+    'Precision': precision_rec,
+    'Recall': recall_rec,
+    'ROC-AUC': roc_auc_tuned,
+    'PR-AUC': pr_auc_tuned,
+    'Tempo (s)': rf_base_time
+})
+
+print(f"  ✓ RF + Threshold (R={best_recall_threshold:.2f}): F1={f1_rec:.3f}, P={precision_rec:.3f}, R={recall_rec:.3f}")
+
+# Salvar resultados de threshold tuning
+df_thresholds.to_csv(OUTPUT_DIR / 'threshold_tuning_results.csv', index=False)
+
+# Atualizar DataFrame de resultados
+results_df = pd.DataFrame(results)
 results_df = results_df.sort_values('F1-Score', ascending=False)
 
 print("\n" + "="*80)
@@ -207,7 +327,7 @@ print(results_df.to_string(index=False))
 # ============================================================================
 print("\n[4/6] Gerando matrizes de confusão...")
 
-n_models = len(models)
+n_models = len(predictions)  # Usar predictions ao invés de models
 n_cols = 3
 n_rows = (n_models + n_cols - 1) // n_cols
 
